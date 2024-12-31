@@ -27,18 +27,21 @@ func Callback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tokens, err := service.SpotifyService.RequestAccessToken(code)
-	if err != nil {
+	if err != nil || tokens == nil {
 		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	user, err := service.SpotifyService.Me(tokens.AccessToken)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	err = database.UserService.Create(user)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	err = database.TokenService.Create(&model.DatabaseTokens{
