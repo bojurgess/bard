@@ -8,6 +8,9 @@
 *.so
 *.dylib
 
+# air
+tmp
+
 # Build
 build
 
