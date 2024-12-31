@@ -171,6 +171,10 @@ func (s *spotifyService) GetCurrentlyPlaying(accessToken string) (*model.Spotify
 		return nil, errors.New(errorResponse.Error.Message)
 	}
 
+	if resp.StatusCode == http.StatusNoContent {
+		return &currentlyPlaying, nil
+	}
+
 	err = json.NewDecoder(resp.Body).Decode(&currentlyPlaying)
 	if err != nil {
 		return nil, err

@@ -1,15 +1,13 @@
 package handler
 
 import (
-	"fmt"
 	"github.com/bojurgess/bard/internal/service"
 	"net/http"
 )
 
 func Authorize(w http.ResponseWriter, r *http.Request) {
 	redirect, state := service.SpotifyService.GenerateAuthUrl()
-
-	fmt.Println(state)
+	
 	http.SetCookie(w, &http.Cookie{
 		Name:     "state",
 		Value:    state,

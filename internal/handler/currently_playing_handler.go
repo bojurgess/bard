@@ -79,6 +79,7 @@ func CurrentlyPlaying(w http.ResponseWriter, r *http.Request) {
 		case <-r.Context().Done():
 			service.BrokerService.Unsubscribe(userId, ch)
 			log.Println("Client disconnected")
+			w.WriteHeader(http.StatusOK)
 			return
 		}
 	}
