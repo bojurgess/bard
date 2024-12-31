@@ -45,6 +45,7 @@ func Callback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = database.TokenService.Create(&model.DatabaseTokens{
+		UserID:       user.ID,
 		AccessToken:  tokens.AccessToken,
 		RefreshToken: tokens.RefreshToken,
 		ExpiresAt:    time.Now().Add(tokens.ExpiresIn),

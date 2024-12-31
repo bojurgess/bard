@@ -11,6 +11,7 @@ type DatabaseTokens struct {
 }
 
 type OAuthTokens struct {
+	UserID       string        `db:"user_id"`
 	AccessToken  string        `json:"access_token"`
 	RefreshToken string        `json:"refresh_token"`
 	ExpiresIn    time.Duration `json:"expires_in"`

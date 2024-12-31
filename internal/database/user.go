@@ -32,3 +32,13 @@ func (u *userService) Delete(id string) error {
 	_, err := db.NamedExec(`DELETE FROM users WHERE id = $1`, id)
 	return err
 }
+
+func (u *userService) Exists(id string) bool {
+	var count int32
+	err := db.Get(&count, `SELECT COUNT(*) FROM users WHERE id = $1`, id)
+	if err != nil {
+		return false
+	}
+
+	return count == 1
+}

@@ -2,14 +2,11 @@ package service
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"github.com/bojurgess/bard/internal/config"
 	"github.com/bojurgess/bard/internal/model"
-	"math/rand"
 	"net/http"
-	"net/url"
-	"strings"
 )
 
 var SpotifyService = &spotifyService{}
@@ -17,7 +14,7 @@ var SpotifyService = &spotifyService{}
 type spotifyService struct{}
 
 func (s *spotifyService) GenerateAuthUrl() (string, string) {
-	state := randomString(15)
+	state := UtilService.RandomString(15)
 	params := map[string]string{
 		"scope":         "user-read-currently-playing",
 		"state":         state,
@@ -26,7 +23,7 @@ func (s *spotifyService) GenerateAuthUrl() (string, string) {
 		"client_id":     config.AppConfig.SpotifyClientId,
 	}
 
-	q := mapToQueryString(params)
+	q := UtilService.MapToQueryString(params)
 	return string("https://accounts.spotify.com/authorize?" + q), state
 }
 
@@ -35,10 +32,10 @@ func (s *spotifyService) RequestAccessToken(code string) (*model.OAuthTokens, er
 
 	headers := map[string]string{
 		"Content-Type":  "application/x-www-form-urlencoded",
-		"Authorization": "Basic " + encodeBasicAuth(),
+		"Authorization": "Basic " + UtilService.EncodeBasicAuth(),
 	}
 
-	body := mapToQueryString(map[string]string{
+	body := UtilService.MapToQueryString(map[string]string{
 		"code":         code,
 		"redirect_uri": config.AppConfig.SpotifyRedirectUri,
 		"grant_type":   "authorization_code",
@@ -79,7 +76,7 @@ func (s *spotifyService) RefreshAccessToken(refreshToken string) (*model.OAuthTo
 		"Authorization": "Bearer " + refreshToken,
 	}
 
-	body := mapToQueryString(map[string]string{
+	body := UtilService.MapToQueryString(map[string]string{
 		"client_id":     config.AppConfig.SpotifyClientId,
 		"client_secret": config.AppConfig.SpotifyClientSecret,
 		"grant_type":    "refresh_token",
@@ -143,28 +140,43 @@ func (*spotifyService) Me(accessToken string) (*model.User, error) {
 	return &user, nil
 }
 
-func encodeBasicAuth() string {
-	return base64.StdEncoding.EncodeToString([]byte(
-		config.AppConfig.SpotifyClientId + ":" + config.AppConfig.SpotifyClientSecret))
-}
+func (s *spotifyService) GetCurrentlyPlaying(accessToken string) (*model.SpotifyCurrentlyPlaying, error) {
+	var currentlyPlaying model.SpotifyCurrentlyPlaying
 
-func mapToQueryString(m map[string]string) string {
-	var q []string
-
-	for key, value := range m {
-		escapedKey := url.QueryEscape(key)
-		escapedValue := url.QueryEscape(value)
-
-		q = append(q, escapedKey+"="+escapedValue)
+	headers := map[string]string{
+		"Content-Type":  "application/json",
+		"Authorization": "Bearer " + accessToken,
 	}
 
-	return strings.Join(q, "&")
-}
-
-func randomString(len int) string {
-	b := make([]byte, len)
-	for i := 0; i < len; i++ {
-		b[i] = byte(65 + rand.Intn(25))
+	req, err := http.NewRequest("GET", "https://api.spotify.com/v1/me/player/currently-playing", nil)
+	if err != nil {
+		return nil, err
 	}
-	return string(b)
+
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		var errorResponse model.SpotifyErrorResponse
+		err = json.NewDecoder(resp.Body).Decode(&errorResponse)
+		if err != nil {
+			return nil, err
+		}
+
+		return nil, errors.New(errorResponse.Error.Message)
+	}
+
+	err = json.NewDecoder(resp.Body).Decode(&currentlyPlaying)
+	if err != nil {
+		return nil, err
+	}
+
+	return &currentlyPlaying, nil
 }
