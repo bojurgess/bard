@@ -65,3 +65,8 @@ type SpotifyErrorDetail struct {
 	Reason      string `json:"reason"`
 	Description string `json:"description"`
 }
+
+type SpotifyCurrentlyPlayingTrackUpdate struct {
+	ProgressMs int   `json:"progress_ms"`
+	Timestamp  int64 `json:"timestamp"`
+}
