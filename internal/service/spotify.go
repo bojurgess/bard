@@ -73,12 +73,10 @@ func (s *spotifyService) RefreshAccessToken(refreshToken string) (*model.OAuthTo
 
 	headers := map[string]string{
 		"Content-Type":  "application/x-www-form-urlencoded",
-		"Authorization": "Bearer " + refreshToken,
+		"Authorization": "Basic " + UtilService.EncodeBasicAuth(),
 	}
 
 	body := UtilService.MapToQueryString(map[string]string{
-		"client_id":     config.AppConfig.SpotifyClientId,
-		"client_secret": config.AppConfig.SpotifyClientSecret,
 		"grant_type":    "refresh_token",
 		"refresh_token": refreshToken,
 	})
@@ -99,7 +97,7 @@ func (s *spotifyService) RefreshAccessToken(refreshToken string) (*model.OAuthTo
 
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, err
+		return nil, errors.New(resp.Status)
 	}
 
 	err = json.NewDecoder(resp.Body).Decode(&tokens)

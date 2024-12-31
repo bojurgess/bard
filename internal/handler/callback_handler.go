@@ -5,7 +5,6 @@ import (
 	"github.com/bojurgess/bard/internal/model"
 	"github.com/bojurgess/bard/internal/service"
 	"net/http"
-	"time"
 )
 
 func Callback(w http.ResponseWriter, r *http.Request) {
@@ -44,12 +43,8 @@ func Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = database.TokenService.Create(&model.DatabaseTokens{
-		UserID:       user.ID,
-		AccessToken:  tokens.AccessToken,
-		RefreshToken: tokens.RefreshToken,
-		ExpiresAt:    time.Now().Add(tokens.ExpiresIn),
-	})
+	dbTokens := model.OAuthToDatabaseTokens(tokens, user.ID)
+	err = database.TokenService.Create(dbTokens)
 
 	_, err = w.Write([]byte("Successfully authenticated! You can now close this tab."))
 	if err != nil {

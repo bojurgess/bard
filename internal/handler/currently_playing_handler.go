@@ -45,14 +45,20 @@ func CurrentlyPlaying(w http.ResponseWriter, r *http.Request) {
 			var buf []byte
 			var err error
 
-			if lastMessage.Item.Name != msg.Item.Name {
-				e = string("new_track")
+			if lastMessage == nil {
+				e = "new_track"
+				buf, err = json.Marshal(msg)
+				if err != nil {
+					log.Println(err)
+				}
+			} else if lastMessage.Item.Name != msg.Item.Name {
+				e = "new_track"
 				buf, err = json.Marshal(msg)
 				if err != nil {
 					log.Println(err)
 				}
 			} else {
-				e = string("track_update")
+				e = "track_update"
 				buf, err = json.Marshal(&model.SpotifyCurrentlyPlayingTrackUpdate{
 					ProgressMs: msg.ProgressMs,
 					Timestamp:  msg.Timestamp,

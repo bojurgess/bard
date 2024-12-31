@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"github.com/bojurgess/bard/internal/database"
+	"github.com/bojurgess/bard/internal/model"
 	"log"
 	"sync"
 	"time"
@@ -51,6 +52,19 @@ func (b *brokerService) BeginBroadcasting(userId string) {
 			case <-ticker.C:
 				currentlyPlaying, err := SpotifyService.GetCurrentlyPlaying(tokens.AccessToken)
 				if err != nil {
+					if err.Error() == "The access token expired" {
+						oauthTokens, err := SpotifyService.RefreshAccessToken(tokens.RefreshToken)
+						if err != nil {
+							fmt.Println(fmt.Errorf("failed to refresh access token: %v", err))
+						}
+						tokens = model.OAuthToDatabaseTokens(oauthTokens, userId)
+						err = database.TokenService.Update(tokens)
+						if err != nil {
+							fmt.Println(fmt.Errorf("failed to update db tokens: %v", err))
+						}
+						continue
+					}
+
 					errMsg := fmt.Errorf("failed to broadcast currently playing: %v", err)
 					b.Publish(userId, "stop")
 					delete(b.stopChannels, userId)
