@@ -14,6 +14,7 @@ var AppConfig struct {
 	SpotifyClientId     string
 	SpotifyClientSecret string
 	SpotifyRedirectUri  string
+	DatabaseUrl         string
 }
 
 func Load() {
@@ -39,6 +40,11 @@ func Load() {
 	}
 
 	AppConfig.SpotifyRedirectUri, err = getEnv("SPOTIFY_REDIRECT_URI", "")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	AppConfig.DatabaseUrl, err = getEnv("DATABASE_URL", "")
 	if err != nil {
 		log.Fatal(err)
 	}
